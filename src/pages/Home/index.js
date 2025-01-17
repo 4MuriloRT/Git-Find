@@ -1,4 +1,4 @@
-import {useState} from 'react'
+import {useEffect, useState} from 'react'
 import { Header } from '../../components/Header'
 import background from '../../assets/background.png'
 import ItemList from '../../components/ItemList'
@@ -8,23 +8,26 @@ function App() {
   const [currentUser, setCurrentUser] = useState(null);
   const [repos, setRepos] = useState(null);
 
-  const handleGetData = async ()=>{
-    const userData = await fetch(`https://api.github.com/users/${user}`);
-    const newUser =  await userData.json();
-
-    if(newUser.name){
-      const {avatar_url, name, bio, login} = newUser;
-      setCurrentUser({avatar_url, name, bio, login})
-
+  const handleGetData = async () => {
+    setCurrentUser(null); 
+    setRepos(null);       
+  
+    try {
+      const userData = await fetch(`https://api.github.com/users/${user}`);
+      if (!userData.ok) throw new Error("Usuário não encontrado");
+  
+      const newUser = await userData.json();
+      const { avatar_url, name, bio, login } = newUser;
+      setCurrentUser({ avatar_url, name, bio, login });
+  
       const reposData = await fetch(`https://api.github.com/users/${user}/repos`);
-      const newRepos =  await reposData.json();
-
-      if(newRepos.length){
-        setRepos(newRepos);
-      }
+      const newRepos = await reposData.json();
+      setRepos(newRepos);
+    } catch (error) {
+      console.error("Erro ao buscar usuário:", error);
     }
-  }
-
+  };
+  
   return (
     <div className="App">
       <Header/>
@@ -54,7 +57,7 @@ function App() {
             <div>
               <h4 className='repositorio'>Repositórios</h4>
               {repos.map(repo => (
-                <ItemList title={repo.name} description={repo.description}/>
+                <ItemList key={repo.id} title={repo.name} description={repo.description}/>
               ))}
             </div>
           ):null}
